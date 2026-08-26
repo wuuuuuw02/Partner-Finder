@@ -1,0 +1,454 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Чат с {{ chat.participants.all.0.username }}{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    
+    <!-- Левая панель: список чатов -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2 style="margin: 0; font-size: 20px;">Чаты</h2>
+        </div>
+        
+        <div class="chat-list">
+            {% for user_chat in user_chats %}
+            <!-- Карточка чата теперь содержит только валидные элементы без вложенных ссылок <a> -->
+            <a href="{% url 'chat_detail' user_chat.pk %}" class="chat-item {% if user_chat.pk == chat.pk %}active{% endif %}">
+                <div class="chat-avatar" style="overflow: hidden; padding: 0;">
+                    {% for participant in user_chat.participants.all %}
+                        {% if participant != user %}
+                            {% if participant.profile.avatar %}
+                                <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                            {% else %}
+                                {{ participant.username|first|upper }}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="chat-info">
+                    <!-- Убрали вложенный тег <a>, заменив его на обычный div, чтобы верстка не ломалась -->
+                    <div class="chat-name">
+                        {% for participant in user_chat.participants.all %}
+                            {% if participant != user %}
+                                <span>{{ participant.username }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="chat-preview">
+                        {% with last_msg=user_chat.messages.last %}
+                            {% if last_msg %}
+                                {{ last_msg.content|truncatechars:30 }}
+                            {% else %}
+                                Нет сообщений
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Правая панель: активный чат -->
+    <div class="chat-main">
+        <div class="chat-content">
+            <!-- Шапка чата -->
+            <div class="chat-header">
+                <div class="chat-avatar" style="width: 40px; height: 40px; font-size: 16px; overflow: hidden; padding: 0;">
+                    {% for participant in chat.participants.all %}
+                        {% if participant != user %}
+                            {% if participant.profile.avatar %}
+                                <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                            {% else %}
+                                {{ participant.username|first|upper }}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px;">
+                        {% for participant in chat.participants.all %}
+                            {% if participant != user %}
+                                <!-- Здесь ссылка на профиль абсолютно валидна, так как родитель не является ссылкой -->
+                                <a href="{% url 'profile' participant.id %}" style="color: var(--accent); text-decoration: none;">
+                                    {{ participant.username }}
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </h3>
+                    {% for participant in chat.participants.all %}
+                        {% if participant != user %}
+                            {% if participant.profile.is_online %}
+                                <span style="font-size: 12px; color: var(--accent);">● в сети</span>
+                            {% else %}
+                                <span style="font-size: 12px; color: var(--text-muted);">○ не в сети</span>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Область сообщений -->
+            <div class="messages-area">
+                {% if messages %}
+                    {% for msg in messages %}
+                        {% if msg.sender == user %}
+                            <div class="message message-own" data-id="{{ msg.id }}">
+                                <div class="message-bubble">
+                                    <div class="message-text">{{ msg.content }}</div>
+                                    <div class="message-time">{{ msg.timestamp|date:"H:i" }}</div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="message message-other" data-id="{{ msg.id }}">
+                                <div class="message-bubble">
+                                    <div class="message-text">{{ msg.content }}</div>
+                                    <div class="message-time">{{ msg.timestamp|date:"H:i" }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-messages">
+                        <p style="color: var(--text-muted); font-size: 14px;">
+                            Начните общение — отправьте первое сообщение!
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Форма отправки через AJAX -->
+            <form id="message-form" class="message-input">
+                {% csrf_token %}
+                <input type="text" 
+                       name="content" 
+                       id="message-input" 
+                       class="message-input-field" 
+                       placeholder="Написать сообщение..." 
+                       autocomplete="off"
+                       required>
+                <button type="submit" class="btn btn-primary">Отправить</button>
+            </form>
+        </div>
+    </div>
+    
+</div>
+
+<!-- JavaScript для отправки сообщений без перезагрузки -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('message-form');
+        const input = document.getElementById('message-input');
+        const messagesArea = document.querySelector('.messages-area');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const chatId = {{ chat.pk }};
+        
+        // 1. Определяем ID последнего сообщения при загрузке страницы
+        let lastMessageId = 0;
+        const existingMessages = document.querySelectorAll('.message');
+        if (existingMessages.length > 0) {
+            const lastId = existingMessages[existingMessages.length - 1].dataset.id;
+            if (lastId && !isNaN(parseInt(lastId))) {
+                lastMessageId = parseInt(lastId);
+            }
+        }
+
+        // --- ОТПРАВКА СООБЩЕНИЯ ---
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const content = input.value.trim();
+            if (!content) return;
+            
+            input.disabled = true;
+            
+            fetch(`/chats/${chatId}/send-ajax/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: `content=${encodeURIComponent(content)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    appendMessage(data.message);
+                    input.value = '';
+                    scrollToBottom();
+                }
+            })
+            .catch(error => console.error('Error:', error))
+            .finally(() => {
+                input.disabled = false;
+                input.focus();
+            });
+        });
+        
+        // --- ФУНКЦИИ ---
+        function appendMessage(msg) {
+            if (document.querySelector(`.message[data-id="${msg.id}"]`)) {
+                return;
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${msg.is_own ? 'message-own' : 'message-other'}`;
+            messageDiv.dataset.id = msg.id;
+            
+            messageDiv.innerHTML = `
+                <div class="message-bubble">
+                    <div class="message-text">${escapeHtml(msg.content)}</div>
+                    <div class="message-time">${msg.timestamp}</div>
+                </div>
+            `;
+            
+            const emptyState = messagesArea.querySelector('.empty-messages');
+            if (emptyState) emptyState.remove();
+            
+            messagesArea.appendChild(messageDiv);
+        }
+        
+        function scrollToBottom() {
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // --- POLLING ---
+        function pollMessages() {
+            fetch(`/chats/${chatId}/get-messages/?last_id=${lastMessageId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.messages && data.messages.length > 0) {
+                        data.messages.forEach(msg => {
+                            appendMessage(msg);
+                            lastMessageId = msg.id;
+                        });
+                        scrollToBottom();
+                    }
+                })
+                .catch(error => console.error('Polling error:', error));
+        }
+
+        setInterval(pollMessages, 2000);
+        scrollToBottom();
+    });
+</script>
+
+<style>
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 180px);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg-card);
+    }
+    
+    .chat-sidebar {
+        width: 350px;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-main);
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-card);
+    }
+    
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border);
+        text-decoration: none;
+        color: var(--text-main);
+        transition: background 0.2s;
+    }
+    
+    .chat-item:hover {
+        background: rgba(0, 255, 136, 0.05);
+    }
+    
+    .chat-item.active {
+        background: rgba(0, 255, 136, 0.1);
+        border-left: 3px solid var(--accent);
+    }
+    
+    .chat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(0, 255, 136, 0.1);
+        border: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-heading);
+        font-size: 20px;
+        color: var(--accent);
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .chat-name {
+        font-weight: 500;
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+    
+    .chat-preview {
+        font-size: 13px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-main);
+    }
+    
+    .chat-content {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .chat-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: var(--bg-card);
+    }
+    
+    .messages-area {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .message {
+        display: flex;
+        max-width: 70%;
+    }
+    
+    .message-own {
+        align-self: flex-end;
+    }
+    
+    .message-other {
+        align-self: flex-start;
+    }
+    
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: 12px;
+        position: relative;
+    }
+    
+    .message-own .message-bubble {
+        background: var(--accent);
+        color: var(--bg-main);
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message-other .message-bubble {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+        border-bottom-left-radius: 4px;
+    }
+    
+    .message-text {
+        font-size: 14px;
+        line-height: 1.5;
+        word-wrap: break-word;
+    }
+    
+    .message-time {
+        font-size: 11px;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .message-own .message-time {
+        color: rgba(0, 0, 0, 0.6);
+    }
+    
+    .message-other .message-time {
+        color: var(--text-muted);
+    }
+    
+    .empty-messages {
+        text-align: center;
+        margin: auto;
+    }
+    
+    .message-input {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+        background: var(--bg-card);
+    }
+    
+    .message-input-field {
+        flex: 1;
+        padding: 12px 16px;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        color: var(--text-main);
+        font-family: var(--font-mono);
+        font-size: 14px;
+    }
+    
+    .message-input-field:focus {
+        outline: none;
+        border-color: var(--accent);
+    }
+    
+    @media (max-width: 768px) {
+        .chat-layout {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .chat-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .chat-main {
+            min-height: 400px;
+        }
+    }
+</style>
+{% endblock %}

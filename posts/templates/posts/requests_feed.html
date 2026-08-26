@@ -1,0 +1,82 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Лента заявок{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+    <h1 style="margin: 0;">ЛЕНТА ЗАЯВОК</h1>
+    <a href="{% url 'posts:create_request' %}" class="btn btn-primary">📝 СОЗДАТЬ ЗАЯВКУ</a>
+</div>
+
+<!-- Фильтры -->
+<div class="card" style="margin-bottom: 25px;">
+    <form method="get" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
+        <div style="flex: 1; min-width: 200px;">
+            <label for="id_type">ФИЛЬТР ПО ТИПУ</label>
+            <select name="type" id="id_type" onchange="this.form.submit()">
+                <option value="">Все заявки</option>
+                <option value="games" {% if request_type == 'games' %}selected{% endif %}>🎮 Игры</option>
+                <option value="study" {% if request_type == 'study' %}selected{% endif %}>📚 Учёба</option>
+                <option value="project" {% if request_type == 'project' %}selected{% endif %}>💻 Проекты</option>
+                <option value="other" {% if request_type == 'other' %}selected{% endif %}>🔧 Другое</option>
+            </select>
+        </div>
+        <div style="flex: 2; min-width: 250px;">
+            <label for="id_search">ПОИСК</label>
+            <input type="text" name="search" id="id_search" placeholder="Поиск заявок..." value="{{ search_query|default:'' }}">
+        </div>
+        <button type="submit" class="btn">ПРИМЕНИТЬ</button>
+        {% if request_type or search_query %}
+            <a href="{% url 'posts:requests_feed' %}" class="btn">СБРОСИТЬ</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Список заявок -->
+{% if requests %}
+    <div style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">
+        Найдено заявок: {{ requests.count }}
+    </div>
+    
+    {% for req in requests %}
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="margin-bottom: 5px; color: var(--text-main);">{{ req.title }}</h3>
+                <span style="font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">
+                    {{ req.get_type_icon }} {{ req.get_request_type_display }}
+                </span>
+            </div>
+            <div style="text-align: right;">
+                <span style="font-size: 12px; color: var(--text-muted);">{{ req.created_at|date:"d.m.Y H:i" }}</span>
+                <div style="font-size: 13px; color: var(--text-muted);">by <strong style="color: var(--text-main);">{{ req.author.username }}</strong></div>
+            </div>
+        </div>
+        
+        <p style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 15px;">
+            {{ req.description|truncatewords:30 }}
+        </p>
+        
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'posts:request_detail' req.pk %}" class="btn">ПОДРОБНЕЕ</a>
+            {% if req.author == user %}
+                <a href="{% url 'posts:delete_request' req.pk %}" class="btn">УДАЛИТЬ</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card" style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;">📡</div>
+        <h2 style="color: var(--text-muted); margin-bottom: 10px;">ЗАЯВКИ НЕ НАЙДЕНЫ</h2>
+        <p style="color: var(--text-muted); margin-bottom: 25px; max-width: 500px; margin-left: auto; margin-right: auto;">
+            {% if request_type or search_query %}
+                По вашему запросу ничего не найдено. Попробуйте изменить фильтры.
+            {% else %}
+                Пока нет активных запросов в системе. Будьте первым, кто создаст заявку!
+            {% endif %}
+        </p>
+        <a href="{% url 'posts:create_request' %}" class="btn btn-primary">СОЗДАТЬ ПЕРВУЮ ЗАЯВКУ</a>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Создать заявку{% endblock %}
+
+{% block content %}
+<h1>СОЗДАТЬ ЗАЯВКУ</h1>
+
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.request_type.id_for_label }}">ТИП ЗАЯВКИ</label>
+            {{ form.request_type }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.title.id_for_label }}">ЗАГОЛОВОК / ТЕМА</label>
+            {{ form.title }}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">ОПИСАНИЕ</label>
+            {{ form.description }}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">🚀 ОПУБЛИКОВАТЬ ЗАЯВКУ</button>
+    </form>
+
+    <div class="links">
+        <a href="{% url 'home' %}">← ВЕРНУТЬСЯ НА ГЛАВНУЮ</a>
+    </div>
+</div>
+{% endblock %}

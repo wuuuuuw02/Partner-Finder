@@ -1,0 +1,56 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Редактировать профиль{% endblock %}
+
+{% block content %}
+<h1>РЕДАКТИРОВАТЬ ПРОФИЛЬ</h1>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Аватар -->
+        <div class="form-group">
+            <label for="avatar">ЗАГРУЗКА АВАТАРА</label>
+            <input type="file" name="avatar" id="avatar" accept="image/*" style="
+                width: 100%;
+                padding: 14px 15px;
+                background: rgba(30, 30, 30, 0.8);
+                border: 1px solid rgba(0, 255, 136, 0.2);
+                border-radius: 4px;
+                color: var(--text-primary);
+                font-family: 'Roboto Mono', monospace;
+                font-size: 15px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.borderColor='var(--green-neon)'; this.style.boxShadow='var(--green-glow)';" onmouseout="this.style.borderColor='rgba(0, 255, 136, 0.2)'; this.style.boxShadow='none';">
+            <small style="color: var(--text-secondary); font-size: 12px; margin-top: 8px; display: block;">
+                Поддерживаются: JPG, PNG, GIF. Max 5MB.
+            </small>
+        </div>
+
+        <!-- Био -->
+        <div class="form-group">
+            <label for="bio">ОПИСАНИЕ / О СЕБЕ</label>
+            <textarea name="bio" id="bio" rows="5" placeholder="Расскажите о себе, своих интересах и целях..." style="
+                width: 100%;
+                padding: 16px 20px;
+                background: rgba(30, 30, 30, 0.8);
+                border: 1px solid rgba(0, 255, 136, 0.2);
+                border-radius: 4px;
+                color: var(--text-primary);
+                font-family: 'Roboto Mono', monospace;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                resize: vertical;
+            " onfocus="this.style.borderColor='var(--green-neon)'; this.style.boxShadow='var(--green-glow)'; this.style.background='rgba(40, 40, 40, 0.9)';" onblur="this.style.borderColor='rgba(0, 255, 136, 0.2)'; this.style.boxShadow='none'; this.style.background='rgba(30, 30, 30, 0.8)';"></textarea>
+        </div>
+
+        <button type="submit" class="btn">💾 СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+    </form>
+
+    <div class="links">
+        <a href="{% url 'profile' %}">← ВЕРНУТЬСЯ К ПРОФИЛЮ</a>
+    </div>
+</div>
+{% endblock %}

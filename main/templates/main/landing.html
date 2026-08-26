@@ -1,0 +1,103 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Partner Finder{% endblock %}
+
+{% block content %}
+
+<!-- Герой-секция -->
+<div style="text-align: center; margin-bottom: 50px; margin-top: 20px;">
+    <h1 style="border: none; font-size: 32px; letter-spacing: 3px; margin-bottom: 15px;">ДОСТУП К СИСТЕМЕ</h1>
+    <p style="font-family: var(--font-heading); color: var(--text-muted); font-size: 18px; letter-spacing: 2px; margin-bottom: 15px;">
+        ПОДКЛЮЧАЙСЯ · СОТРУДНИЧАЙ · ПОБЕЖДАЙ
+    </p>
+    <p style="max-width: 600px; margin: 0 auto; color: var(--text-main); line-height: 1.6;">
+        Найдите напарников для игр, учёбы и проектов.<br>
+        Объединяйтесь с единомышленниками в единой экосистеме.
+    </p>
+</div>
+
+<!-- Сетка возможностей -->
+<div class="card" style="margin-bottom: 30px;">
+    <h2 style="text-align: center; margin-bottom: 25px; color: var(--text-muted); font-size: 16px; letter-spacing: 2px;">
+        ВОЗМОЖНОСТИ СИСТЕМЫ
+    </h2>
+    
+    <div class="features-grid">
+        <!-- Games -->
+        <div class="feature-item">
+            <span class="feature-icon">🎮</span>
+            <div class="feature-title">ИГРЫ</div>
+            <div class="feature-desc">Находите игроков для совместных сессий в любимых играх</div>
+        </div>
+        
+        <!-- Study -->
+        <div class="feature-item">
+            <span class="feature-icon">📚</span>
+            <div class="feature-title">УЧЁБА</div>
+            <div class="feature-desc">Объединяйтесь для совместной учёбы и подготовки</div>
+        </div>
+        
+        <!-- Projects -->
+        <div class="feature-item">
+            <span class="feature-icon">💻</span>
+            <div class="feature-title">ПРОЕКТЫ</div>
+            <div class="feature-desc">Находите команду для разработки IT-проектов</div>
+        </div>
+        
+        <!-- Chat -->
+        <div class="feature-item">
+            <span class="feature-icon">💬</span>
+            <div class="feature-title">ЧАТ</div>
+            <div class="feature-desc">Общайтесь в реальном времени и координируйте действия</div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок уведомления -->
+<div style="background: #0f0f0f; border: 1px solid #331111; border-left: 3px solid #ff4444; padding: 20px; border-radius: 4px; margin-bottom: 30px; text-align: center;">
+    <div style="font-family: var(--font-heading); color: #ff4444; font-size: 14px; margin-bottom: 8px; letter-spacing: 1px;">
+        >>> SYSTEM ALERT
+    </div>
+    <p style="font-size: 14px; color: var(--text-muted); margin: 0; line-height: 1.5;">
+        Для доступа к полному функционалу системы требуется авторизация.
+        <br>Создайте аккаунт или войдите для подключения.
+    </p>
+</div>
+
+<!-- Кнопки -->
+<div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+    <a href="{% url 'register' %}" class="btn btn-primary">РЕГИСТРАЦИЯ</a>
+    <a href="{% url 'login' %}" class="btn">ВОЙТИ</a>
+</div>
+
+<!-- Локальные стили для сетки -->
+<style>
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    .feature-item {
+        background: #0a0a0a;
+        border: 1px solid var(--border);
+        padding: 20px;
+        border-radius: 6px;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .feature-item:hover {
+        border-color: var(--accent);
+        transform: translateY(-3px);
+    }
+    .feature-icon { font-size: 32px; display: block; margin-bottom: 12px; }
+    .feature-title { 
+        font-family: var(--font-heading); 
+        color: var(--accent); 
+        margin-bottom: 8px; 
+        font-size: 14px; 
+        letter-spacing: 1px; 
+    }
+    .feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+</style>
+
+{% endblock %}

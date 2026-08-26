@@ -1,0 +1,157 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}{{ target_user.username }}'s Profile{% endblock %}
+
+{% block content %}
+<h1>ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ</h1>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <!-- Шапка профиля -->
+    <div style="display: flex; align-items: center; gap: 25px; margin-bottom: 30px; flex-wrap: wrap;">
+        <div style="position: relative;">
+            {% if target_user.profile.avatar %}
+                <img src="{{ target_user.profile.avatar.url }}" alt="Avatar" style="
+                    width: 100px; height: 100px; border-radius: 50%; 
+                    border: 3px solid var(--accent); object-fit: cover;
+                    box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+                ">
+            {% else %}
+                <div style="
+                    width: 100px; height: 100px; border-radius: 50%; 
+                    background: rgba(0, 255, 136, 0.1); border: 3px solid var(--accent);
+                    display: flex; align-items: center; justify-content: center;
+                    font-family: var(--font-heading); font-size: 40px; color: var(--accent);
+                ">
+                    {{ target_user.username|first|upper }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+            <h2 style="font-family: var(--font-heading); font-size: 24px; color: var(--accent); margin-bottom: 8px; text-transform: uppercase;">
+                {{ target_user.username }}
+            </h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <span style="background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 4px 10px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(0, 255, 136, 0.2);">
+                    Участник с: {{ target_user.date_joined|date:"d.m.Y" }}
+                </span>
+                {% if target_user.profile.is_online %}
+                <span style="background: rgba(0, 255, 136, 0.1); color: var(--accent); padding: 4px 10px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(0, 255, 136, 0.2);">
+                    ● В сети
+                </span>
+                {% else %}
+                <span style="background: rgba(119, 119, 119, 0.1); color: var(--text-muted); padding: 4px 10px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border: 1px solid rgba(119, 119, 119, 0.2);">
+                    ○ Не в сети
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Описание -->
+    <div style="margin-bottom: 30px;">
+        <h3 style="font-size: 14px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
+            >>> О СЕБЕ
+        </h3>
+        <div style="
+            background: var(--bg-main); padding: 18px; border-radius: 6px; 
+            border-left: 3px solid var(--accent); font-size: 14px; line-height: 1.6; color: var(--text-main);
+        ">
+            {% if target_user.profile.bio %}
+                {{ target_user.profile.bio|linebreaksbr }}
+            {% else %}
+                <span style="color: var(--text-muted); font-style: italic;">Описание не заполнено.</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 40px;">
+        {% if target_user == request.user %}
+            <a href="{% url 'edit_profile' %}" class="btn">⚙️ РЕДАКТИРОВАТЬ ПРОФИЛЬ</a>
+        {% else %}
+            <a href="{% url 'start_chat' target_user.id %}" class="btn btn-primary">💬 НАПИСАТЬ СООБЩЕНИЕ</a>
+        {% endif %}
+        {% if target_user == request.user %}
+            <a href="{% url 'logout' %}" class="btn" style="border-color: #ff4444; color: #ff4444;">🚪 ВЫЙТИ</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Комментарии -->
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h3 style="margin-bottom: 20px; font-size: 16px;">>>> КОММЕНТАРИИ ({{ comments.count }})</h3>
+    
+    <!-- Форма добавления комментария (всегда видна, кроме своего профиля) -->
+    {% if target_user != request.user %}
+        <div style="border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 20px; margin-bottom: 25px; background: rgba(0, 255, 136, 0.03);">
+            <h4 style="font-size: 14px; margin-bottom: 15px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                ДОБАВИТЬ КОММЕНТАРИЙ
+            </h4>
+            <form method="post" action="{% url 'add_comment' target_user.id %}">
+                {% csrf_token %}
+                <textarea 
+                    name="content" 
+                    rows="3" 
+                    class="form-control"
+                    placeholder="Напишите комментарий о пользователе..."
+                    maxlength="500"
+                    style="margin-bottom: 10px;"
+                    required
+                ></textarea>
+                <button type="submit" class="btn btn-primary">
+                    📝 ОПУБЛИКОВАТЬ
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 15px; background: rgba(0, 255, 136, 0.05); border-radius: 6px; color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">
+            Вы не можете оставить комментарий самому себе
+        </div>
+    {% endif %}
+    
+    <!-- Список комментариев -->
+    {% if comments %}
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            {% for comment in comments %}
+            <div style="background: var(--bg-main); padding: 18px; border-radius: 6px; border-left: 3px solid var(--border); position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+                    <a href="{% url 'profile' comment.author.id %}" style="color: var(--accent); font-size: 14px; text-decoration: none; font-weight: 500;">
+                        {{ comment.author.username }}
+                    </a>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 12px; color: var(--text-muted);">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                        {% if comment.author == request.user or target_user == request.user %}
+                            <!-- Иконка мусорки для автора ИЛИ владельца профиля -->
+                            <form method="post" action="{% url 'delete_comment' comment.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" style="
+                                    background: none;
+                                    border: none;
+                                    color: #ff4444;
+                                    cursor: pointer;
+                                    font-size: 16px;
+                                    padding: 0;
+                                    opacity: 0.7;
+                                    transition: opacity 0.2s;
+                                " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'" 
+                                title="{% if comment.author == request.user %}Удалить свой комментарий{% else %}Удалить комментарий{% endif %}">
+                                    🗑
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+                <p style="font-size: 14px; line-height: 1.5; color: var(--text-main); margin: 0;">
+                    {{ comment.content }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+            <p>Пока нет комментариев. Будьте первым!</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Подтверждение удаления{% endblock %}
+
+{% block content %}
+<h1>ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ</h1>
+
+<div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+    <div style="font-size: 48px; margin-bottom: 20px; color: #ff4444;">⚠️</div>
+    <h2 style="margin-bottom: 15px; color: var(--text-main);">Вы уверены?</h2>
+    <p style="color: var(--text-muted); margin-bottom: 25px; line-height: 1.6;">
+        Вы собираетесь удалить следующую заявку:<br>
+        <strong style="color: var(--text-main);">"{{ req.title }}"</strong><br>
+        Это действие нельзя отменить.
+    </p>
+    
+    <form method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn" style="border-color: #ff4444; color: #ff4444; margin-right: 15px;">
+            ДА, УДАЛИТЬ
+        </button>
+    </form>
+    
+    <a href="{% url 'posts:request_detail' req.pk %}" class="btn">ОТМЕНА</a>
+</div>
+{% endblock %}

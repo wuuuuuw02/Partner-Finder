@@ -1,0 +1,50 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Подробности запроса{% endblock %}
+
+{% block content %}
+<a href="{% url 'posts:requests_feed' %}" class="btn" style="margin-bottom: 25px; display: inline-block;">← НАЗАД К ЛЕНТЕ</a>
+
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <!-- Шапка заявки -->
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h1 style="margin-bottom: 10px; font-size: 26px; color: var(--text-main);">{{ req.title }}</h1>
+            <span style="font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; background: rgba(0, 255, 136, 0.08); padding: 4px 10px; border-radius: 3px; border: 1px solid rgba(0, 255, 136, 0.2);">
+                {{ req.get_type_icon }} {{ req.get_request_type_display }}
+            </span>
+        </div>
+        <div style="text-align: right; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+            <div>Автор: <strong style="color: var(--text-main);">{{ req.author.username }}</strong></div>
+            <div>Создано: {{ req.created_at|date:"d.m.Y H:i" }}</div>
+            
+            {% if req.author != user %}
+                <!-- Кнопка "Написать" показывается только если это не твоя заявка -->
+                <div style="margin-top: 10px;">
+                    <a href="{% url 'start_chat' req.author.id %}" class="btn btn-primary" style="font-size: 12px; padding: 8px 16px;">
+                        💬 НАПИСАТЬ АВТОРУ
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Описание -->
+    <div style="border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px;">
+        <h3 style="margin-bottom: 12px; font-size: 16px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+            >>> ПОЛНОЕ ОПИСАНИЕ
+        </h3>
+        <div style="font-size: 15px; line-height: 1.7; color: var(--text-main); white-space: pre-wrap;">
+            {{ req.description }}
+        </div>
+    </div>
+
+    <!-- Действия (только для автора) -->
+    {% if req.author == user %}
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
+        <a href="{% url 'posts:edit_request' req.pk %}" class="btn">РЕДАКТИРОВАТЬ</a>
+        <a href="{% url 'posts:delete_request' req.pk %}" class="btn" style="border-color: #ff4444; color: #ff4444;">УДАЛИТЬ</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

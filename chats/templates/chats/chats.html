@@ -1,0 +1,226 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Чаты{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    
+    <!-- Левая панель: список чатов -->
+    <div class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2 style="margin: 0; font-size: 20px;">Чаты</h2>
+        </div>
+        
+        <div class="chat-list">
+            {% if chats %}
+                {% for chat in chats %}
+                <div class="chat-item-wrapper">
+                    <a href="{% url 'chat_detail' chat.pk %}" class="chat-item">
+                        <div class="chat-avatar" style="overflow: hidden; padding: 0;">
+                            {% for participant in chat.participants.all %}
+                                {% if participant != user %}
+                                    {% if participant.profile.avatar %}
+                                        <img src="{{ participant.profile.avatar.url }}" alt="{{ participant.username }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                    {% else %}
+                                        {{ participant.username|first|upper }}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="chat-info">
+                            <div class="chat-name">
+                                {% for participant in chat.participants.all %}
+                                    {% if participant != user %}
+                                        {{ participant.username }}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="chat-preview">
+                                {% with last_msg=chat.messages.last %}
+                                    {% if last_msg %}
+                                        {{ last_msg.content|truncatechars:30 }}
+                                    {% else %}
+                                        Нет сообщений
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </a>
+                    <form method="post" action="{% url 'delete_chat' chat.pk %}" class="delete-chat-form">
+                        {% csrf_token %}
+                        <button type="submit" title="Удалить чат">
+                            🗑
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div style="font-size: 48px; margin-bottom: 15px; opacity: 0.5;">💬</div>
+                    <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">
+                        У вас пока нет активных диалогов.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Правая панель: заглушка (выберите чат) -->
+    <div class="chat-main">
+        <div class="empty-chat">
+            <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.3;"></div>
+            <h3 style="color: var(--text-muted); margin-bottom: 10px;">Выберите чат</h3>
+            <p style="color: var(--text-muted); font-size: 14px;">
+                Выберите диалог из списка слева
+            </p>
+        </div>
+    </div>
+    
+</div>
+
+<style>
+    .chat-layout {
+        display: flex;
+        height: calc(100vh - 180px);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--bg-card);
+    }
+    
+    .chat-sidebar {
+        width: 350px;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-main);
+    }
+    
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-card);
+    }
+    
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+    }
+    
+    /* ✅ Новый контейнер для чата и кнопки удаления */
+    .chat-item-wrapper {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .chat-item {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        text-decoration: none;
+        color: var(--text-main);
+        transition: background 0.2s;
+    }
+    
+    .chat-item:hover {
+        background: rgba(0, 255, 136, 0.05);
+    }
+    
+    .chat-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(0, 255, 136, 0.1);
+        border: 2px solid var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-heading);
+        font-size: 20px;
+        color: var(--accent);
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+    
+    .chat-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .chat-name {
+        font-weight: 500;
+        margin-bottom: 5px;
+        font-size: 15px;
+    }
+    
+    .chat-preview {
+        font-size: 13px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* ✅ Стили для формы удаления */
+    .delete-chat-form {
+        padding: 0 15px;
+        flex-shrink: 0;
+    }
+    
+    .delete-chat-form button {
+        background: none;
+        border: none;
+        color: #ff4444;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 5px;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+    }
+    
+    .delete-chat-form button:hover {
+        opacity: 1;
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        text-align: center;
+    }
+    
+    .chat-main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-main);
+    }
+    
+    .empty-chat {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    @media (max-width: 768px) {
+        .chat-layout {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .chat-sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .chat-main {
+            min-height: 400px;
+        }
+    }
+</style>
+{% endblock %}

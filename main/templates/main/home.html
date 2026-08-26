@@ -1,0 +1,59 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Панель управления{% endblock %}
+
+{% block content %}
+<h1>ПАНЕЛЬ УПРАВЛЕНИЯ</h1>
+
+<!-- Приветствие -->
+<div style="text-align: center; margin-bottom: 35px;">
+    <h2 style="font-size: 22px; margin-bottom: 8px; color: var(--text-main);">С возвращением, {{ user.username }}</h2>
+    <p style="color: var(--text-muted); font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">
+        Соединение установлено • Система заявок готова
+    </p>
+</div>
+
+<!-- Карточка: Создание заявки -->
+<div class="card" style="text-align: center; margin-bottom: 30px;">
+    <div style="font-size: 36px; margin-bottom: 12px;">📝</div>
+    <h3 style="margin-bottom: 8px;">СОЗДАТЬ ЗАЯВКУ</h3>
+    <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 18px; max-width: 450px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+        Опишите, кого вы ищете. Укажите цели, навыки и формат работы.
+    </p>
+    <a href="{% url 'posts:create_request' %}" class="btn btn-primary btn-block" style="max-width: 280px; margin: 0 auto;">▶ СОЗДАТЬ ЗАЯВКУ</a>
+</div>
+
+<!-- Лента моих заявок -->
+<div class="card">
+    <h3 style="margin-bottom: 15px;">>>> МОИ ЗАЯВКИ</h3>
+
+    {% if user_requests %}
+        {% for req in user_requests %}
+        <div style="padding: 15px; border-bottom: 1px solid var(--border); margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <strong style="color: var(--text-main);">{{ req.title }}</strong>
+                    <span style="font-size: 12px; color: var(--accent); margin-left: 8px;">{{ req.get_type_icon }} {{ req.get_request_type_display }}</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">
+                    {{ req.created_at|date:"d.m.Y H:i" }}
+                </div>
+            </div>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+                {{ req.description|truncatewords:25 }}
+            </p>
+            <div style="margin-top: 10px;">
+                <a href="{% url 'posts:request_detail' req.pk %}" style="color: var(--accent); font-size: 13px; text-decoration: none;">Подробнее →</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 30px; border: 1px dashed var(--border); border-radius: 4px; color: var(--text-muted);">
+            <div style="font-size: 28px; margin-bottom: 12px;">🔍</div>
+            <p style="margin-bottom: 8px;">У вас пока нет созданных заявок.</p>
+            <p style="font-size: 13px;">Нажмите <span style="color: var(--accent);">СОЗДАТЬ ЗАЯВКУ</span>, чтобы начать поиск.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}
