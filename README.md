@@ -102,7 +102,6 @@
 - [ ] Групповые чаты
 - [ ] WebSockets для real-time чатов (вместо long-polling)
 - [ ] CI/CD и деплой на продакшен
-- [ ] Вынос `SECRET_KEY` в `.env`
 
 ---
 
