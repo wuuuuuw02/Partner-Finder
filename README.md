@@ -208,8 +208,6 @@ DB_PORT=5432
 SECRET_KEY=django-insecure-your-secret-key-here
 ```
 
-> **⚠️ Важно:** В текущей версии `SECRET_KEY` жёстко прописан в [`settings.py`](core/settings.py:25). Для продакшена обязательно вынесите его в `.env` через `config('SECRET_KEY')`.
-
 6. **Выполните миграции**
 
 ```bash
@@ -247,8 +245,6 @@ http://127.0.0.1:8000/
 | `DB_PASSWORD` | Пароль пользователя БД | — |
 | `DB_HOST` | Хост БД | `localhost` |
 | `DB_PORT` | Порт БД | `5432` |
-
-> **Рекомендация:** Добавьте `SECRET_KEY` в `.env` и используйте `config('SECRET_KEY')` в [`settings.py`](core/settings.py) вместо хардкода.
 
 ---
 
